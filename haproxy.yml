@@ -1,0 +1,60 @@
+- hosts: all
+  tasks:
+    - file:
+        state: directory
+        path: "/dvd1"  
+    
+    - mount:
+        src: "/dev/cdrom"
+        path: "/dev1"
+        state: mounted
+        fstype: "iso9660"
+
+    - yum_repository:
+        baseurl: "/dvd1/AppStream"
+        name: "mydvd1"
+        description: "my yum dvd1 for packages of AppStream"
+        gpgcheck: no
+
+    - yum_repository:
+        baseurl: "/dvd1/BaseOS"
+        name: "mydvd2"
+        description: "my yum dvd2 for packages of BaseOS"
+        gpgcheck: no
+
+- name: "For Web Servers"
+  hosts: myWeb
+  tasks:
+    - package:
+        name: "httpd"
+        state: present
+    - copy:
+        dest: "/var/www/html/index.html"
+        content: "Hello! This is my Task 12.1\n"
+      register: x
+    - service:
+        name: "httpd"
+        state: restarted
+        enabled: yes
+      when: x.changed == true
+
+- name: "For Load Balancer"
+  hosts: myLB
+  vars:
+    port_no: "8081"
+  tasks:
+    - package:
+        name: "haproxy"
+        state: present
+
+    - template:
+        dest: "/etc/haproxy/haproxy.cfg"
+        src: "haproxy.cfg"
+      register: x
+
+    - service:
+        name: "haproxy"
+        state: restarted
+        enabled: yes
+      when: x.changed == true
+
